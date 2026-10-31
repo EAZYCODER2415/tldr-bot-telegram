@@ -69,7 +69,7 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
     combined_text = f"Message: {prompt}"
     
     if language not in ["auto"]:
-        combined_text += f"\nSummary Language: {', '.join(language)}"
+        combined_text += f"\nSummary Language: {language}, "
     
     if doc_names:
         combined_text += f"\nAttachments: {', '.join(doc_names)}"

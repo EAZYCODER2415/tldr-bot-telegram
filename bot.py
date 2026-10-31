@@ -432,7 +432,7 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE, target_t
     
                 if len(context.args) >= 2:
                     topic = " ".join(context.args[1:])
-            except ValueError:
+            except ValueError or IndexError:
                 await update.message.reply_text(
                     "Invalid parameters. Usage: /summarize [numerical hours] [[topic (optional)]]"
                 )
@@ -500,12 +500,12 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE, target_t
         if prompt and file_url:
             summary = await asyncio.wait_for(
                 asyncio.to_thread(summarizeLLMtool, prompt, file_url, link, language), 
-                timeout=30.0
+                timeout=60.0
             )
         elif prompt:
             summary = await asyncio.wait_for(
                 asyncio.to_thread(summarizeLLMtool, prompt, None, link, language), 
-                timeout=30.0
+                timeout=60.0
             )
         else:
             return "⚠️ Failed to generate summary. Cannot fetch data.", messages
