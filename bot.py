@@ -68,14 +68,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "🤖 **AUTOMATIC SUMMARIES**\n"
         "Once a chat reaches **200 messages**, I'll automatically wait for a quiet 5-minute stretch in the conversation before generating and posting a clean summary—ensuring you never get cut off mid-convo!\n\n"
         "📌 **COMMANDS & USAGE**\n\n"
-        "⚡ **`/summarize`** `[hours]` `[topic (optional)]`\n"
+        "⚡ **`/tldr`** `[hours]` `[topic (optional)]`\n"
         "Generate an instant summary within a specific timeframe (in hours, e.g., `2` or `1.5`) and optional target topic.\n\n"
         "📎 **File Tagging**\n"
         "Include `#summarize` in file or media captions so I parse them into summary data!\n\n"
         "⚙️ **`/config`**\n"
         "Manage automatic summary settings for your chat:\n\n"
         "🌐 **`/lang`**\n"
-        "Configure bot's output language (auto or empty params for detect language).\n\n"
+        "Configure bot's output language (any language or auto-detect).\n\n"
         "🚩 **`/report`**\n"
         "Submit feedback or bug reports to TLDRFlow admin via direct message.\n\n"
         "🔒 **All messages and chat data are encrypted**"
@@ -414,7 +414,7 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE, target_t
         if context and context.args is not None:
             # User input summarize command without parameters
             if len(context.args) == 0:
-                missing_param_msg = "Invalid parameters. Usage: /summarize [numerical hours] [[topic (optional)]]"
+                missing_param_msg = "Invalid parameters. Usage: /tldr [numerical hours] [[topic (optional)]]"
                 if update and update.message:
                     await update.message.reply_text(missing_param_msg)
                 else:
@@ -434,7 +434,7 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE, target_t
                     topic = " ".join(context.args[1:])
             except ValueError or IndexError:
                 await update.message.reply_text(
-                    "Invalid parameters. Usage: /summarize [numerical hours] [[topic (optional)]]"
+                    "Invalid parameters. Usage: /tldr [numerical hours] [[topic (optional)]]"
                 )
                 return
     
