@@ -600,7 +600,7 @@ async def config(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
     member = await context.bot.get_chat_member(chat.id, user.id)
-    if member.status not in ["administrator", "creator"]:
+    if chat.type not in ["private"] and member.status not in ["administrator", "creator"]:
         await update.message.reply_text("⛔ Only group administrators can configure summary settings.")
         return
 
@@ -871,7 +871,7 @@ async def language_selection(update: Update, context: ContextTypes.DEFAULT_TYPE)
 
     user = update.effective_user
     member = await context.bot.get_chat_member(chat_id, user.id)
-    if member.status not in ["administrator", "creator"]:
+    if update.effective_chat.type not in ["private"] and member.status not in ["administrator", "creator"]:
         await update.message.reply_text("⛔ Only group administrators can configure summary settings.")
         return
     
