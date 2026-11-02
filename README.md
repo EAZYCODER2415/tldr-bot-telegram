@@ -17,6 +17,9 @@
 
 **TLDRFlow** is a lightweight, high-performance Telegram bot designed to solve information overload in active university, club, and project group chats. Instead of scrolling through hundreds of missed messages, users can instantly generate structured, context-aware summaries covering multi-lingual discussions (English, Chinese, Japanese, and Tamil).
 
+#### 🖼️ Bot preview snapshot
+![preview_img](tldrflow_snap.jpg)
+
 ---
 
 ## ✨ Key Features
