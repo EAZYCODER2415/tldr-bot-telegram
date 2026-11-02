@@ -324,7 +324,7 @@ def create_messageThread(chat_id:int, hours: float, thread_id:int, topic: str=No
     logger.info(f"🎰Summarize command called. Counted {total_count} messages for summarizer logging.")
     
     if total_count == 0:
-        return None, None, None
+        return [], None, None, [], None
 
     # 2. Retrieve messages from database
     messages = db.get_messages(chat_id=chat_id, thread_id=thread_id, since=since_time, hours=hours)
@@ -480,14 +480,14 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE, target_t
         messages = db.get_messages(chat_id=chat_id, thread_id=thread_id, since=since_time, hours=hours)
 
         if not messages:
-            return "No messages logged yet to summarize.", None
+            return "No messages logged yet to summarize.", None, []
         
         # prerequisite passed: there are messages to log!!
         messages, prompt, file_url, file_urls, link = create_messageThread(chat_id, hours, thread_id, topic)
         
         # Check for valid prompt return
         if not prompt:
-            return"⚠️ No relevant messages found for this topic.", messages
+            return "⚠️ No relevant messages found for this topic.", messages, []
         
         # Initialize summary
         summary = None
@@ -508,7 +508,7 @@ async def summarize(update: Update, context: ContextTypes.DEFAULT_TYPE, target_t
                 timeout=60.0
             )
         else:
-            return "⚠️ Failed to generate summary. Cannot fetch data.", messages
+            return "⚠️ Failed to generate summary. Cannot fetch data.", messages, []
         return summary, messages, file_urls
 
     # Register task in dictionary to ensure it is cancelable
