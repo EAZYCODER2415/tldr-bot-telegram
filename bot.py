@@ -225,7 +225,7 @@ async def handle_custom_language_reply(update: Update, context: ContextTypes.DEF
         # Run your lightweight LLM evaluation helper with a timeout
         normalized_lang = await asyncio.wait_for(
             asyncio.to_thread(validate_language, user_text), 
-            timeout=15.0
+            timeout=30.0
         )
         
         if normalized_lang:

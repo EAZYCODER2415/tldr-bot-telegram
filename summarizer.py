@@ -102,7 +102,7 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
                     },
                     {"role": "user", "content": content}
                 ],
-                timeout=25.0
+                timeout=60.0
             )
 
             return response.choices[0].message.content
@@ -169,7 +169,7 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
                     },
                     {"role": "user", "content": content}
                 ],
-                timeout=25.0
+                timeout=40.0
             )
 
             return response.choices[0].message.content.strip() == "True"
@@ -219,7 +219,7 @@ def validate_language(input: str=None) -> str:
                     },
                     {"role": "user", "content": content}
                 ],
-                timeout=15.0
+                timeout=30.0
             )
 
             return response.choices[0].message.content
