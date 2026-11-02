@@ -64,7 +64,7 @@ def init_db():
                     chat_type TEXT NOT NULL,
                     thread_id BIGINT,
                     chat_title TEXT,
-                    user TEXT NOT NULL,
+                    "user" TEXT NOT NULL,
                     text TEXT NOT NULL,
                     has_attachment BOOLEAN DEFAULT FALSE,
                     attachment_type TEXT,
