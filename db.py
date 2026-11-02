@@ -64,7 +64,7 @@ def init_db():
                     chat_type TEXT NOT NULL,
                     thread_id BIGINT,
                     chat_title TEXT,
-                    "user" TEXT NOT NULL,
+                    user TEXT NOT NULL,
                     text TEXT NOT NULL,
                     has_attachment BOOLEAN DEFAULT FALSE,
                     attachment_type TEXT,
@@ -87,7 +87,6 @@ def init_db():
                     thread_id INTEGER,
                     summary_thread_id BIGINT,
                     is_enabled BOOLEAN DEFAULT FALSE,
-                    message_count INTEGER,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     pending_summary BOOLEAN DEFAULT FALSE,
                     language TEXT DEFAULT NULL 
@@ -125,7 +124,6 @@ def init_db():
                     thread_id INTEGER,
                     summary_thread_id BIGINT,
                     is_enabled BOOLEAN DEFAULT FALSE,
-                    message_count INTEGER,
                     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     pending_summary BOOLEAN DEFAULT FALSE
                 )
@@ -299,7 +297,7 @@ def get_latest_message(chat_id: int=None, thread_id: int=None) -> datetime | Non
         return row["timestamp"] if DATABASE_URL else row[0]
 
 def delete_old_messages(hours: int = 72) -> int:
-    """Deletes messages older than the specified number of hours."""
+    """Deletes messages older than the specified number of hours or already summarized."""
     with get_connection() as conn:
         cursor = conn.cursor()
         # Retrieve timestamp of most recent message
@@ -311,13 +309,13 @@ def delete_old_messages(hours: int = 72) -> int:
         if DATABASE_URL:
             query = """
                 DELETE FROM messages 
-                WHERE timestamp < NOW() - (%s || ' hours')::INTERVAL
+                WHERE timestamp < NOW() - (%s || ' hours')::INTERVAL OR is_summarized = TRUE
             """
             cursor.execute(query, (str(hours),))
         else:
             query = """
                 DELETE FROM messages 
-                WHERE (julianday('now') - julianday(timestamp)) * 24 >= ?
+                WHERE (julianday('now') - julianday(timestamp)) * 24 >= ? OR is_summarized = TRUE
             """
             # Execute deletion
             cursor.execute(query, (float(hours),))
@@ -394,11 +392,11 @@ def get_or_create_chat_metadata(chat_id: int, thread_id: int | None = None) -> d
         language = None
 
     query = """
-        INSERT INTO chat_metadata (chat_id, thread_id, summary_thread_id, is_enabled, message_count, updated_at, pending_summary, language)
+        INSERT INTO chat_metadata (chat_id, thread_id, summary_thread_id, is_enabled, updated_at, pending_summary, language)
         VALUES (%s, %s, %s, TRUE, 1, CURRENT_TIMESTAMP, FALSE, %s)
         ON CONFLICT (chat_id, COALESCE(thread_id, -1)) 
         DO UPDATE SET updated_at = chat_metadata.updated_at
-        RETURNING summary_thread_id, is_enabled, message_count, language;
+        RETURNING summary_thread_id, is_enabled, language;
     """
 
     with get_connection() as conn:
@@ -440,7 +438,7 @@ def update_chat_settings(chat_id: int, summary_thread_id: int | None = None, is_
 def get_chat_settings(chat_id: int, thread_id: int | None = None) -> dict:
     """Retrieves chat configuration (destination topic, status, and message count)."""
     query = """
-        SELECT summary_thread_id, is_enabled, message_count, language 
+        SELECT summary_thread_id, is_enabled, language 
         FROM chat_metadata 
         WHERE chat_id = %s AND COALESCE(thread_id, -1) = COALESCE(%s, -1)
         LIMIT 1;
@@ -452,39 +450,7 @@ def get_chat_settings(chat_id: int, thread_id: int | None = None) -> dict:
         if row:
             return row
         # Default settings for new chats
-        return {"summary_thread_id": None, "is_enabled": True, "message_count": 0, "language": None}
-
-
-def increment_message_count(chat_id: int, thread_id: int | None = None) -> int:
-    """
-    Atomically increments message count or creates the row if it doesn't exist yet.
-    """
-    query = """
-        INSERT INTO chat_metadata (chat_id, thread_id, summary_thread_id, is_enabled, message_count, updated_at)
-        VALUES (%s, %s, NULL, TRUE, 1, CURRENT_TIMESTAMP)
-        ON CONFLICT (chat_id, COALESCE(thread_id, -1))
-        DO UPDATE SET 
-            message_count = chat_metadata.message_count + 1,
-            updated_at = CURRENT_TIMESTAMP
-        RETURNING message_count;
-    """
-
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(query, (chat_id, thread_id))
-        return cursor.fetchone()
-
-
-def reset_message_count(chat_id: int, thread_id: int | None = None) -> None:
-    """Resets the message counter back to zero after generating a summary."""
-    query = """
-        UPDATE chat_metadata 
-        SET message_count = 0, updated_at = CURRENT_TIMESTAMP 
-        WHERE chat_id = %s AND COALESCE(thread_id, -1) = COALESCE(%s, -1);
-    """
-    with get_connection() as conn:
-        cursor = conn.cursor()
-        cursor.execute(query, (chat_id, thread_id))
+        return {"summary_thread_id": None, "is_enabled": True, "language": None}
 
 def get_pending_summary(chat_id: int, thread_id: int | None = None) -> bool:
     """Resets the message counter back to zero after generating a summary."""

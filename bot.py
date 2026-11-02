@@ -653,7 +653,6 @@ async def delayed_summary_trigger(update, context, chat_id, thread_id, target_th
             
             # Clear pending state and reset counter in DB
             db.set_pending_summary(chat_id, False, thread_id)
-            db.reset_message_count(chat_id, thread_id)
             
             # Trigger your existing summary generation logic
             await summarize(update, context, target_thread_id=target_thread_id)
@@ -834,8 +833,7 @@ async def log_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
 
         chat_status = db.get_or_create_chat_metadata(chat_id, thread_id)
         is_enabled = chat_status.get("is_enabled")
-        current_count = db.increment_message_count(chat_id, thread_id)
-        current_count = current_count.get("message_count")
+        current_count = db.count_messages(chat_id, thread_id)
 
         if is_enabled:
             logger.info(
