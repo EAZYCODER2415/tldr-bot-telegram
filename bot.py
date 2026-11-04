@@ -20,7 +20,7 @@ from aiohttp import web
 import db
 from db import init_db, delete_old_messages
 
-from summarizer import summarizeLLMtool, checkForTopic, validate_language
+from summarizer import summarizeLLMtool, checkForTopic, validate_language, openrouter_heartbeat_loop
 
 # Timeout check
 import asyncio
@@ -947,6 +947,7 @@ async def health_check(request):
     return web.Response(text="Bot is alive!", status=200)
 
 async def start_health_check_server():
+    # Check bot.py uptime status
     app = web.Application()
     app.router.add_get("/", health_check)
     runner = web.AppRunner(app)
@@ -958,9 +959,11 @@ async def start_health_check_server():
 # Start health check server on startup loop via post_init hook
 # Run cleanup every hour (3600 seconds)
 async def post_init(application: Application):
+    # Check OpenRouter API key and log status
     job_queue = application.job_queue
     if job_queue:
         job_queue.run_repeating(cleanup_database, interval=3600, first=10)
+        job_queue.run_repeating(openrouter_heartbeat_loop, interval=300, first=15)
     await start_health_check_server()
 
 # --- App setup -----------------------------------------------------------

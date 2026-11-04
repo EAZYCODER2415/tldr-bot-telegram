@@ -45,6 +45,9 @@ RULES & CONSTRAINTS
 - State plainly and concisely within the summary structure that the chat lacked significant context, and maintain standard output formatting without inventing details.
 - Treat image URLs/context as supplementary background to the chat prompt.
 - Use they/them/their for all pronouns.
+- When chat transcripts reference external facts, technical specifications, or breaking events, use your online search capability to cross-reference and verify their accuracy.
+- If a claim made in the chat is verifiably false or ambiguous, politely clarify or note it within the summary rather than presenting it as absolute fact.
+- Do not fabricate details or external links not present in the source logs or verified search results.
 
 4. Timestamp Specification:
 - Lists how many days, hours, minutes, or seconds did the retreived messages span. DO NOT MISTAKE IT AS THE DATE. Simplify to nearest unit when necessary.

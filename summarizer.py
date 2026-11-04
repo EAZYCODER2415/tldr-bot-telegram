@@ -11,6 +11,13 @@ library has to handle the processing of all message buffer content and prepare A
 import os, time
 from openai import OpenAI, APIError
 
+import asyncio
+import httpx
+import os
+import logging
+
+logger = logging.getLogger(__name__)
+
 # DashScope provides an OpenAI-compatible endpoint
 client = OpenAI(
     api_key=os.getenv("OPENROUTER_API_KEY"),
@@ -26,18 +33,50 @@ PROMPT_FILE = os.path.join(os.path.dirname(__file__), "system_instruction.txt")
 with open(PROMPT_FILE, "r", encoding="utf-8") as f:
     system_instruction = f.read()
 
-# The FREE MODEL list (in case Qwen doesn't work)
-# free_models = [
-#     "meta-llama/llama-3.3-70b-instruct:free",
-#     "google/gemini-2.0-flash-exp:free",    # Multimodal (Text + Vision)
-#     "qwen/qwen2.5-vl-72b-instruct:free"    # Multimodal (Text + Vision - correct slug)
-# ]
-
 free_models = [
     "openrouter/free",
     "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free",
     "google/gemma-4-31b-it:free"
 ]
+
+async def openrouter_heartbeat_loop(context=None):
+    """
+    Pings OpenRouter every X seconds (default: 5 minutes) with a tiny 
+    completion request to keep the TCP connection alive and warm.
+    """
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        logger.warning("⚠️ OPENROUTER_API_KEY not found. Heartbeat disabled.")
+        return
+
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "HTTP-Referer": "https://github.com/EAZYCODER2415/tldr-bot-telegram",
+        "X-Title": "TLDRFlow Keepalive"
+    }
+    # Minimal payload to consume almost zero tokens/cost
+    payload = {
+        "model": "qwen/qwen-2.5-72b-instruct",
+        "messages": [{"role": "user", "content": "ping"}],
+        "max_tokens": 1
+    }
+
+    # Give the bot time to fully boot up before the first ping
+    await asyncio.sleep(10)
+    
+    interval_seconds = 300  # 5 minutes
+    try:
+        # Use a fresh short-lived client for the heartbeat ping
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            response = await client.post(url, json=payload, headers=headers)
+            if response.status_code == 200:
+                logger.info("🟢 OpenRouter heartbeat successful (connection kept warm).")
+            else:
+                logger.warning(f"⚠️ OpenRouter heartbeat returned status: {response.status_code}")
+    except Exception as e:
+        # Catch timeouts/network drops silently so it never crashes the bot
+        await logger.debug(f"ℹ️ Heartbeat ping skipped due to temporary network/idle state: {e}")
 
 def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, language: str = None) -> str:
     """
@@ -50,7 +89,7 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
     """
 
     # Base text model (for first try)
-    model = "qwen/qwen-2.5-72b-instruct"
+    model = "qwen/qwen-2.5-72b-instruct:online"
 
     # Separate URLs from raw document filenames
     urls = []
@@ -155,7 +194,7 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
 
             # Append image URLs cleanly
             if urls:
-                model = "qwen/qwen-2.5-vl-72b-instruct:free"  # Switch to vision model
+                model = "qwen/qwen-2.5-vl-72b-instruct:free:online"  # Switch to vision model
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
 
