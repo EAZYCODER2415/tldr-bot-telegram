@@ -917,11 +917,11 @@ async def language_selection(update: Update, context: ContextTypes.DEFAULT_TYPE)
             InlineKeyboardButton("English", callback_data=f"{LANG_PREFIX}English")
         ],
         [
-            InlineKeyboardButton("中文", callback_data=f"{LANG_PREFIX}Chinese"),
-            InlineKeyboardButton("ไทย", callback_data=f"{LANG_PREFIX}Thai"),
+            InlineKeyboardButton("中文", callback_data=f"{LANG_PREFIX}中文"),
+            InlineKeyboardButton("Melayu", callback_data=f"{LANG_PREFIX}Malay"),
         ],
         [
-            InlineKeyboardButton("Melayu", callback_data=f"{LANG_PREFIX}Malay"),
+            InlineKeyboardButton("தமிழ்", callback_data=f"{LANG_PREFIX}Tamil"),
             InlineKeyboardButton("etc. ✍️", callback_data=LANG_ETC)
         ], [InlineKeyboardButton("❌ Cancel", callback_data=LANG_CANCEL)]
     ]
