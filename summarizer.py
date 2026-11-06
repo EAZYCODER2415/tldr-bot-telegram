@@ -39,6 +39,8 @@ free_models = [
     "google/gemma-4-31b-it:free"
 ]
 
+plugins = [{id: "web", "type": "web", "name": "Web Browser Plugin"}]
+
 async def openrouter_heartbeat_loop(context=None):
     """
     Pings OpenRouter every X seconds (default: 5 minutes) with a tiny 
@@ -89,7 +91,7 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
     """
 
     # Base text model (for first try)
-    model = "qwen/qwen-2.5-72b-instruct:online"
+    model = "qwen/qwen-2.5-72b-instruct"
 
     # Separate URLs from raw document filenames
     urls = []
@@ -134,6 +136,13 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
             response = client.chat.completions.create(
                 model=model,
                 extra_body={"models": free_models},
+                provider={
+                    "order": ["DeepInfra", "Together"],
+                    "allow_fallbacks": False
+                },
+                plugins=plugins,
+                temperature=0.2,  # Forces adherence to prompt formatting
+                top_p=0.9,
                 messages=[
                     {
                         "role": "system",
@@ -194,7 +203,7 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
 
             # Append image URLs cleanly
             if urls:
-                model = "qwen/qwen-2.5-vl-72b-instruct:free:online"  # Switch to vision model
+                model = "qwen/qwen-2.5-vl-72b-instruct:free"  # Switch to vision model
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
 
