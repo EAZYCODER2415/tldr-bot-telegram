@@ -75,7 +75,9 @@ def init_db():
                     file_size BIGINT,
                     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     is_summarized BOOLEAN DEFAULT FALSE,
-                    link TEXT
+                    link TEXT,
+                    message_id BIGINT DEFAULT NULL,
+                    reply_to_id BIGINT DEFAULT NULL
                 )
                 """
             )
@@ -112,6 +114,8 @@ def init_db():
                     mime_type TEXT,
                     file_size INTEGER,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    message_id INTEGER DEFAULT NULL,
+                    reply_to_id INTEGER DEFAULT NULL,
                     is_summarized BOOLEAN DEFAULT FALSE
                 )
                 """
@@ -147,7 +151,9 @@ def log_message(
         file_size=None,
         timestamp=None,
         is_summarized=False,
-        link=None
+        link=None,
+        message_id=None,
+        reply_to_id=None
 ):
     """Log a message, including attachment flags and attachment type."""
     att_flag = bool(has_attachment)
@@ -155,7 +161,7 @@ def log_message(
     # 1. Define column list
     cols = ["chat_id", "chat_type", "thread_id", "chat_title", "user" if not DATABASE_URL else '"user"',
             "text", "has_attachment", "attachment_type", "file_id", "file_name", 
-            "local_path", "mime_type", "file_size", "timestamp", "is_summarized", "link"]
+            "local_path", "mime_type", "file_size", "timestamp", "is_summarized", "link", "message_id", "reply_to_id"]
     
     # 2. Pick placeholder style dynamically
     placeholder = "%s" if DATABASE_URL else "?"
@@ -167,7 +173,7 @@ def log_message(
     params = (
         chat_id, chat_type, thread_id, chat_title, user, text,
         att_flag, attachment_type, file_id, file_name,
-        local_path, mime_type, file_size, timestamp, False, link
+        local_path, mime_type, file_size, timestamp, False, link, message_id, reply_to_id
     )
 
     with get_connection() as conn:

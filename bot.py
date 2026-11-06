@@ -340,15 +340,30 @@ def create_messageThread(chat_id:int, hours: float, thread_id:int, topic: str=No
     for msg in messages:
         # Standardize record extraction based on db.py schema
         # Assuming schema: (id, chat_id, chat_type, thread_id, chat_title, user, text, has_attachment, attachment_type, file_id, file_name, local_path, mime_type, file_size, timestamp)
+        msg_id = msg["id"]
         user_name = msg["user"]
         text_content = msg["text"]
         has_attachment = msg["has_attachment"]
         file_name = msg["file_name"]
         local_path = msg["local_path"]  # or public URL/file_id depending on storage
         timestamp = msg["timestamp"]
+        reply_to_id = msg["reply_to_id"] if msg["reply_to_id"] else None
 
         if text_content:
-            message = f"{timestamp} | {user_name}: {text_content}"
+            message = f"{msg_id} - {timestamp} | {user_name}: {text_content}"
+
+            # Add reply if reply message is inside the message log window
+            if reply_to_id:
+                reply_msg = next((m for m in messages if m["message_id"] == reply_to_id), None)
+                if reply_msg:
+                    reply_user = reply_msg["user"]
+                    reply_text = reply_msg["text"]
+                    # Cap message word character limit
+                    # Right now it shouldn't go above 60 characters, but just in case.
+                    if len(reply_text) > 60:
+                        reply_text = reply_text[:57] + "..."
+                    message += f" (in reply to {reply_user}: {reply_text})"
+
             if has_attachment and (local_path or file_name):
                 file_data = local_path or file_name
             else:
@@ -698,6 +713,7 @@ async def log_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     local_path = None
     mime_type = None
     file_size = None
+    message_id = update.message.message_id
 
     # IF message has ANY attachment AND text/caption is "#summarize":
     if has_attachment and ("#summarize" in text.lower()):
@@ -746,11 +762,13 @@ async def log_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     link = None
     if chat_type not in ["private"] and update.effective_chat.username:
         # Public group/channel
-        link = f"https://t.me/{update.effective_chat.username}/{update.message.message_id}"
+        link = f"https://t.me/{update.effective_chat.username}/{message_id}"
     elif chat_type in ["group", "supergroup"]:
         # Private group or supergroup (handles IDs with or without -100)
         clean_chat_id = str(chat_id).replace("-100", "").replace("-", "")
-        link = f"https://t.me/c/{clean_chat_id}/{update.message.message_id}"
+        link = f"https://t.me/c/{clean_chat_id}/{message_id}"
+
+    reply_to_id = update.message.reply_to_message.message_id if update.message.reply_to_message else None
 
     try:
         if has_attachment and "#summarize" in text.lower():
@@ -770,7 +788,9 @@ async def log_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     mime_type=mime_type,
                     file_size=file_size,
                     timestamp=timestamp,
-                    link=link
+                    link=link,
+                    message_id=message_id,
+                    reply_to_id=reply_to_id
                 )
             elif chat_type == "private":
                 db.log_message(
@@ -788,7 +808,9 @@ async def log_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     mime_type=mime_type,
                     file_size=file_size,
                     timestamp=timestamp,
-                    link=link
+                    link=link,
+                    message_id=message_id,
+                    reply_to_id=reply_to_id
                 )
         else:
             if chat_type in ["group", "supergroup"]:
@@ -807,7 +829,9 @@ async def log_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     mime_type=None,
                     file_size=None,
                     timestamp=timestamp,
-                    link=link
+                    link=link,
+                    message_id=message_id,
+                    reply_to_id=reply_to_id
                 )
             elif chat_type == "private":
                 db.log_message(
@@ -825,7 +849,9 @@ async def log_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
                     mime_type=None,
                     file_size=None,
                     timestamp=timestamp,
-                    link=link
+                    link=link,
+                    message_id=message_id,
+                    reply_to_id=reply_to_id
                 )
             logger.info(f"Logged message from {user} in chat {chat_id}")
 
