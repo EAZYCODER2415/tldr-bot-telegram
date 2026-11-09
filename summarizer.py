@@ -39,7 +39,7 @@ free_models = [
     "google/gemma-4-31b-it:free"
 ]
 
-plugins = [{id: "web", "type": "web", "name": "Web Browser Plugin"}]
+plugins = [{"id": "web"}]
 
 async def openrouter_heartbeat_loop(context=None):
     """
@@ -154,7 +154,6 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
                 },
                 timeout=60.0
             )
-
             return response.choices[0].message.content
 
         except APIError as e:
@@ -263,7 +262,7 @@ def validate_language(input: str=None) -> str:
         try:
             # Build content list dynamically
             content = [
-                {"type": "text", "text": input}
+                {"type": "text", "text": input},
             ]
 
             response = client.chat.completions.create(
@@ -275,9 +274,7 @@ def validate_language(input: str=None) -> str:
                         "role": "system",
                         "content": system_prompt
                     },
-                    {
-                        "role": "user", "content": content
-                    }
+                    {"role": "user", "content": content}
                 ],
                 extra_body={
                     "models": free_models,
@@ -289,7 +286,6 @@ def validate_language(input: str=None) -> str:
                 },
                 timeout=30.0
             )
-
             return response.choices[0].message.content
 
         except APIError as e:
@@ -302,12 +298,3 @@ def validate_language(input: str=None) -> str:
         except Exception as e:
             print(f"Unexpected error: {e}")
             return f"⚠️ Could not check language: {str(e)}"
-
-
-
-'''
-1. Get SQL database
-2. Create a function in db.py that filters the entire database's items with specific parameters and writes them all into 'prompt' variable.
-3. Do the same with the items w/ images and make an 'image_url' variable
-4. Use the 'prompt' and 'image_url' variables for the function.
-'''
