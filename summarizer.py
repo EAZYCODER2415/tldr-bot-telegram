@@ -135,12 +135,6 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
 
             response = client.chat.completions.create(
                 model=model,
-                extra_body={"models": free_models},
-                provider={
-                    "order": ["DeepInfra", "Together"],
-                    "allow_fallbacks": False
-                },
-                plugins=plugins,
                 temperature=0.2,  # Forces adherence to prompt formatting
                 top_p=0.9,
                 messages=[
@@ -150,6 +144,14 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
                     },
                     {"role": "user", "content": content}
                 ],
+                extra_body={
+                    "models": free_models,
+                    "provider": {
+                        "order": ["DeepInfra", "Together"],
+                        "allow_fallbacks": False
+                    },
+                    "plugins": plugins
+                },
                 timeout=60.0
             )
 
@@ -209,7 +211,7 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
 
             response = client.chat.completions.create(
                 model=model,
-                extra_body={"models": free_models},
+                temperature=0.2,  # Forces adherence to prompt formatting
                 messages=[
                     {
                         "role": "system",
@@ -217,6 +219,13 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
                     },
                     {"role": "user", "content": content}
                 ],
+                extra_body={
+                    "models": free_models,
+                    "provider": {
+                        "order": ["DeepInfra", "Together"],
+                        "allow_fallbacks": False
+                    }
+                },
                 timeout=40.0
             )
 
@@ -259,14 +268,25 @@ def validate_language(input: str=None) -> str:
 
             response = client.chat.completions.create(
                 model=model,
-                extra_body={"models": free_models},
+                temperature=0.2,
+                top_p=0.9,
                 messages=[
                     {
                         "role": "system",
                         "content": system_prompt
                     },
-                    {"role": "user", "content": content}
+                    {
+                        "role": "user", "content": content
+                    }
                 ],
+                extra_body={
+                    "models": free_models,
+                    "provider": {
+                        "order": ["DeepInfra", "Together"],
+                        "allow_fallbacks": False
+                    },
+                    "plugins": plugins
+                },
                 timeout=30.0
             )
 
