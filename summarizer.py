@@ -41,6 +41,11 @@ free_models = [
 
 plugins = [{"id": "web"}]
 
+extra_body_config = {
+    "models": free_models,
+    "plugins": plugins
+}
+
 async def openrouter_heartbeat_loop(context=None):
     """
     Pings OpenRouter every X seconds (default: 5 minutes) with a tiny 
@@ -129,49 +134,30 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
 
             # Append image URLs cleanly
             if urls:
-                model = "google/gemma-4-26b-a4b-it"  # Switch to vision model
+                model = "nvidia/nemotron-3.5-super-vl:free"  # Switch to vision model
                 for url in urls:
-                    content.append({"type": "image_url", "image_url": {"url": urls}})
-            if urls:
-                response = client.chat.completions.create(
-                    model=model,
-                    temperature=0.2,  # Forces adherence to prompt formatting
-                    top_p=0.9,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": system_instruction,
-                        },
-                        {"role": "user", "content": content}
-                    ],
-                    extra_body={
-                        "models": free_models,
-                        "plugins": plugins
+                    content.append({"type": "image_url", "image_url": {"url": url}})
+            
+            if not urls:
+                extra_body_config["provider"] = {
+                    "order": ["DeepInfra", "Together"],
+                    "allow_fallbacks": False
+                }
+            
+            response = client.chat.completions.create(
+                model=model,
+                temperature=0.2,  # Forces adherence to prompt formatting
+                top_p=0.9,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": system_instruction,
                     },
-                    timeout=60.0
-                )
-            else:
-                response = client.chat.completions.create(
-                    model=model,
-                    temperature=0.2,  # Forces adherence to prompt formatting
-                    top_p=0.9,
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": system_instruction,
-                        },
-                        {"role": "user", "content": content}
-                    ],
-                    extra_body={
-                        "models": free_models,
-                        "provider": {
-                            "order": ["DeepInfra", "Together"],
-                            "allow_fallbacks": False
-                        },
-                        "plugins": plugins
-                    },
-                    timeout=60.0
-                )
+                    {"role": "user", "content": content}
+                ],
+                extra_body=extra_body_config,
+                timeout=60.0
+            )
             return response.choices[0].message.content
 
         except APIError as e:
@@ -222,47 +208,29 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
 
             # Append image URLs cleanly
             if urls:
-                model = "google/gemma-4-26b-a4b-it"  # Switch to vision model
+                model = "nvidia/nemotron-3.5-super-vl:free"  # Switch to vision model
                 for url in urls:
-                    content.append({"type": "image_url", "image_url": {"url": urls}})
-
-            if urls:
-                response = client.chat.completions.create(
-                    model=model,
-                    temperature=0.2,  # Forces adherence to prompt formatting
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": f"You are detecting whether the given message (or attached files) is related to the topic: {topic}. Output ONLY 'True' or 'False'."
-                        },
-                        {"role": "user", "content": content}
-                    ],
-                    extra_body={
-                        "models": free_models,
+                    content.append({"type": "image_url", "image_url": {"url": url}})
+            
+            if not urls:
+                extra_body_config["provider"] = {
+                    "order": ["DeepInfra", "Together"],
+                    "allow_fallbacks": False
+                }     
+            
+            response = client.chat.completions.create(
+                model=model,
+                temperature=0.2,  # Forces adherence to prompt formatting
+                messages=[
+                    {
+                        "role": "system",
+                        "content": f"You are detecting whether the given message (or attached files) is related to the topic: {topic}. Output ONLY 'True' or 'False'."
                     },
-                    timeout=40.0
-                )
-            else:
-                response = client.chat.completions.create(
-                    model=model,
-                    temperature=0.2,  # Forces adherence to prompt formatting
-                    messages=[
-                        {
-                            "role": "system",
-                            "content": f"You are detecting whether the given message (or attached files) is related to the topic: {topic}. Output ONLY 'True' or 'False'."
-                        },
-                        {"role": "user", "content": content}
-                    ],
-                    extra_body={
-                        "models": free_models,
-                        "provider": {
-                            "order": ["DeepInfra", "Together"],
-                            "allow_fallbacks": False
-                        }
-                    },
-                    timeout=40.0
-                )
-
+                    {"role": "user", "content": content}
+                ],
+                extra_body=extra_body_config,
+                timeout=40.0
+            )
             return response.choices[0].message.content.strip() == "True"
 
         except APIError as e:
