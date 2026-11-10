@@ -132,28 +132,46 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
                 model = "google/gemma-4-26b-a4b-it"  # Switch to vision model
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
-
-            response = client.chat.completions.create(
-                model=model,
-                temperature=0.2,  # Forces adherence to prompt formatting
-                top_p=0.9,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": system_instruction,
+            if urls:
+                response = client.chat.completions.create(
+                    model=model,
+                    temperature=0.2,  # Forces adherence to prompt formatting
+                    top_p=0.9,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": system_instruction,
+                        },
+                        {"role": "user", "content": content}
+                    ],
+                    extra_body={
+                        "models": free_models,
+                        "plugins": plugins
                     },
-                    {"role": "user", "content": content}
-                ],
-                extra_body={
-                    "models": free_models,
-                    "provider": {
-                        "order": ["DeepInfra", "Together"],
-                        "allow_fallbacks": False
+                    timeout=60.0
+                )
+            else:
+                response = client.chat.completions.create(
+                    model=model,
+                    temperature=0.2,  # Forces adherence to prompt formatting
+                    top_p=0.9,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": system_instruction,
+                        },
+                        {"role": "user", "content": content}
+                    ],
+                    extra_body={
+                        "models": free_models,
+                        "provider": {
+                            "order": ["DeepInfra", "Together"],
+                            "allow_fallbacks": False
+                        },
+                        "plugins": plugins
                     },
-                    "plugins": plugins
-                },
-                timeout=60.0
-            )
+                    timeout=60.0
+                )
             return response.choices[0].message.content
 
         except APIError as e:
@@ -208,25 +226,42 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
 
-            response = client.chat.completions.create(
-                model=model,
-                temperature=0.2,  # Forces adherence to prompt formatting
-                messages=[
-                    {
-                        "role": "system",
-                        "content": f"You are detecting whether the given message (or attached files) is related to the topic: {topic}. Output ONLY 'True' or 'False'."
+            if urls:
+                response = client.chat.completions.create(
+                    model=model,
+                    temperature=0.2,  # Forces adherence to prompt formatting
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": f"You are detecting whether the given message (or attached files) is related to the topic: {topic}. Output ONLY 'True' or 'False'."
+                        },
+                        {"role": "user", "content": content}
+                    ],
+                    extra_body={
+                        "models": free_models,
                     },
-                    {"role": "user", "content": content}
-                ],
-                extra_body={
-                    "models": free_models,
-                    "provider": {
-                        "order": ["DeepInfra", "Together"],
-                        "allow_fallbacks": False
-                    }
-                },
-                timeout=40.0
-            )
+                    timeout=40.0
+                )
+            else:
+                response = client.chat.completions.create(
+                    model=model,
+                    temperature=0.2,  # Forces adherence to prompt formatting
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": f"You are detecting whether the given message (or attached files) is related to the topic: {topic}. Output ONLY 'True' or 'False'."
+                        },
+                        {"role": "user", "content": content}
+                    ],
+                    extra_body={
+                        "models": free_models,
+                        "provider": {
+                            "order": ["DeepInfra", "Together"],
+                            "allow_fallbacks": False
+                        }
+                    },
+                    timeout=40.0
+                )
 
             return response.choices[0].message.content.strip() == "True"
 
