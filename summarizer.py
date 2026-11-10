@@ -129,7 +129,7 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
 
             # Append image URLs cleanly
             if urls:
-                model = "qwen/qwen-2.5-vl-72b-instruct:free"  # Switch to vision model
+                model = "qwen/qwen-2.5-vl-72b-instruct"  # Switch to vision model
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
 
@@ -204,7 +204,7 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
 
             # Append image URLs cleanly
             if urls:
-                model = "qwen/qwen-2.5-vl-72b-instruct:free"  # Switch to vision model
+                model = "qwen/qwen-2.5-vl-72b-instruct"  # Switch to vision model
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
 
