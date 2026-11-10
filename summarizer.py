@@ -129,7 +129,7 @@ def summarizeLLMtool(prompt: str, file_url: str = None, link: str = None, langua
 
             # Append image URLs cleanly
             if urls:
-                model = "google/gemma-4-26b-a4b-it:free"  # Switch to vision model
+                model = "google/gemma-4-26b-a4b-it"  # Switch to vision model
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
 
@@ -204,7 +204,7 @@ def checkForTopic(message: str, topic: str, file_url: str = None) -> bool:
 
             # Append image URLs cleanly
             if urls:
-                model = "google/gemma-4-26b-a4b-it:free"  # Switch to vision model
+                model = "google/gemma-4-26b-a4b-it"  # Switch to vision model
                 for url in urls:
                     content.append({"type": "image_url", "image_url": {"url": urls}})
 
